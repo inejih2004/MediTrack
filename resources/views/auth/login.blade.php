@@ -18,6 +18,9 @@
     @if(session('error'))
         <div class="alert alert-danger">{{ session('error') }}</div>
     @endif
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
     <form method="POST" action="{{ route('login') }}">
         @csrf
         <div class="mb-3">
@@ -37,6 +40,14 @@
         <div class="d-grid gap-2 mb-3">
             <button type="submit" class="btn btn-primary">Se connecter</button>
         </div>
+        @if(Auth::check())
+            <div class="text-center">
+                <a href="{{ route('logout') }}" class="text-decoration-none" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Déconnexion</a>
+                <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                    @csrf
+                </form>
+            </div>
+        @endif
         <div class="text-center">
             <a href="" class="text-decoration-none">Mot de passe oublié ?</a>
         </div>

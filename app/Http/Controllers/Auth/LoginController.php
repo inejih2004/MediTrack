@@ -36,6 +36,7 @@ class LoginController extends Controller
                 'email' => $user->email,
                 'stored_password' => $user->password,
                 'role' => $user->role,
+                'service_id' => $user->service_id,
             ]);
         } else {
             \Log::info('User not found for email: ' . $request->email);
@@ -54,19 +55,23 @@ class LoginController extends Controller
                 \Log::error('Authentication failed after login attempt for user: ' . $user->email);
             }
 
+            // Store service_id and role in session
+            session(['service_id' => $user->service_id, 'role' => $user->role]);
+
             // Redirect based on role
             switch ($user->role) {
-                case 'stock_manager':
-                    \Log::info('Redirecting to stock.dashboard');
-                    return redirect()->route('stock.dashboard');
                 case 'service_head':
-                    \Log::info('Redirecting to service.dashboard');
-                    return redirect()->route('service.dashboard');
+                    if ($user->service_id) {
+                        return redirect()->route('dashboard');
+                    } else {
+                        Auth::logout();
+                        return back()->with('error', "Aucun service associé à cet utilisateur.");
+                    }
+                case 'stock_manager':
+                    return redirect()->route('dashboard');
                 case 'accountant':
-                    \Log::info('Redirecting to accountant.dashboard');
-                    return redirect()->route('accountant.dashboard');
+                    return redirect()->route('dashboard');
                 case 'admin':
-                    \Log::info('Redirecting to admin.dashboard');
                     return redirect()->route('admin.dashboard');
                 default:
                     \Log::info('Unknown role for user: ' . $user->email);
@@ -83,6 +88,8 @@ class LoginController extends Controller
     public function logout(Request $request)
     {
         Auth::logout();
-        return redirect('/login');
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('login')->with('success', 'Vous êtes déconnecté avec succès.');
     }
 }
